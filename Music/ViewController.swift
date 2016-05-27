@@ -40,12 +40,7 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
         if flag == 0{
             flag = 1
             play.setImage(UIImage(named: "pause"), forState: .Normal)
-            player.play()
-            player.stop()
             avaudio()
-            soundPlayer.play()
-            timer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: #selector(ViewController.updateAudioProgressView), userInfo: nil, repeats: true)
-            soundPlayer.meteringEnabled = true
         }
         else{
             flag = 0
@@ -59,10 +54,6 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
     @IBAction func forwardPressed(sender: AnyObject) {
         player.skipToNextItem()
         avaudio()
-        if flag == 1{
-            soundPlayer.play()
-            timer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: #selector(ViewController.updateAudioProgressView), userInfo: nil, repeats: true)
-        }
         updateAudioProgressView()
         soundPlayer.meteringEnabled = true
     }
@@ -70,10 +61,6 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
     @IBAction func rewindPressed(sender: AnyObject) {
         player.skipToPreviousItem()
         avaudio()
-        if flag == 1{
-            soundPlayer.play()
-            timer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: #selector(ViewController.updateAudioProgressView), userInfo: nil, repeats: true)
-        }
         updateAudioProgressView()
         soundPlayer.meteringEnabled = true
     }
@@ -116,6 +103,11 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
                 soundPlayer.delegate = self
                 soundPlayer.prepareToPlay()
                 soundPlayer.volume = 1.0
+                if flag == 1{
+                    soundPlayer.play()
+                    timer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: #selector(ViewController.updateAudioProgressView), userInfo: nil, repeats: true)
+                    soundPlayer.meteringEnabled = true
+                }
             }catch let error as NSError{
                 soundPlayer = nil
                 songName.text = "\(error.localizedDescription)"
@@ -149,12 +141,9 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
         if playFlag == true{
             playFlag = false
             player.nowPlayingItem = mediaItems[playItem]
+            flag = 1
             avaudio()
             play.setImage(UIImage(named: "pause"), forState: .Normal)
-            flag = 1
-            soundPlayer.play()
-            timer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: #selector(ViewController.updateAudioProgressView), userInfo: nil, repeats: true)
-            soundPlayer.meteringEnabled = true
         }
         else{
             avaudio()
@@ -165,10 +154,27 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
         
         let displayLink:CADisplayLink = CADisplayLink(target: self, selector: #selector(ViewController.updateMeters))
         displayLink.addToRunLoop(NSRunLoop.currentRunLoop(), forMode: NSRunLoopCommonModes)
+        
+        do {
+            try AVAudioSession.sharedInstance().setCategory(AVAudioSessionCategoryPlayback)
+            print("AVAudioSession Category Playback OK")
+            do {
+                try AVAudioSession.sharedInstance().setActive(true)
+                print("AVAudioSession is Active")
+            } catch let error as NSError {
+                print(error.localizedDescription)
+            }
+        } catch let error as NSError {
+            print(error.localizedDescription)
+        }//For playing audio in background
 
     }
     
     func updateAudioProgressView(){
+        if soundPlayer.currentTime > soundPlayer.duration - 1{
+            player.skipToNextItem()
+            avaudio()
+        }
         let current = soundPlayer.currentTime/soundPlayer.duration * 360
         progressView.angle = Double(current)
     }
