@@ -1,0 +1,13 @@
+PODS:
+  - KDCircularProgress (1.4.0)
+  - SCSiriWaveformView (1.0.3)
+
+DEPENDENCIES:
+  - KDCircularProgress
+  - SCSiriWaveformView
+
+SPEC CHECKSUMS:
+  KDCircularProgress: f5770bbd83da909bf6cd96c2dea0b8bae45ec774
+  SCSiriWaveformView: b8b2756af42addcd31900c3945f24edafefb5395
+
+COCOAPODS: 0.39.0
