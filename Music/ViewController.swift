@@ -40,6 +40,8 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
         if flag == 0{
             flag = 1
             play.setImage(UIImage(named: "pause"), forState: .Normal)
+            player.play()
+            player.stop()
             avaudio()
             soundPlayer.play()
             timer = NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: #selector(ViewController.updateAudioProgressView), userInfo: nil, repeats: true)
@@ -95,27 +97,36 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
     }
     
     func avaudio(){
-        songName.text = player.nowPlayingItem?.title!.uppercaseString
-        albumName.text = player.nowPlayingItem?.albumTitle!.uppercaseString
-        let current = player.nowPlayingItem
-        let url = current?.valueForProperty(MPMediaItemPropertyAssetURL) as! NSURL
-        let item = AVPlayerItem(URL: url)
-        let info = item.asset.metadata 
-        artwork.image = UIImage(named: "placeholder")
-        for item in info {
+        if player.nowPlayingItem != nil{
+            songName.text = player.nowPlayingItem?.title!.uppercaseString
+            albumName.text = player.nowPlayingItem?.albumTitle!.uppercaseString
+            let current = player.nowPlayingItem
+            let url = current?.valueForProperty(MPMediaItemPropertyAssetURL) as? NSURL
+            let item = AVPlayerItem(URL: url!)
+            let info = item.asset.metadata
+            artwork.image = UIImage(named: "placeholder")
+            for item in info {
                 if item.commonKey  == "artwork" {
                     artwork.image = UIImage(data: item.value as! NSData)
                 }
+            }
+            
+            do{
+                soundPlayer = try AVAudioPlayer(contentsOfURL: url!)
+                soundPlayer.delegate = self
+                soundPlayer.prepareToPlay()
+                soundPlayer.volume = 1.0
+            }catch let error as NSError{
+                soundPlayer = nil
+                songName.text = "\(error.localizedDescription)"
+            }
         }
-        
-        do{
-            soundPlayer = try AVAudioPlayer(contentsOfURL: url)
-            soundPlayer.delegate = self
-            soundPlayer.prepareToPlay()
-            soundPlayer.volume = 1.0
-        }catch let error as NSError{
-            soundPlayer = nil
-            songName.text = "\(error.localizedDescription)"
+        else{
+            play.setImage(UIImage(named: "play"), forState: .Normal)
+            play.enabled = false
+            songName.text = ""
+            albumName.text = ""
+            artwork.image = nil
         }
     }
     
@@ -135,7 +146,6 @@ class ViewController: UIViewController, AVAudioPlayerDelegate {
         mediaItems = MPMediaQuery.songsQuery().items!
         let mediaCollection = MPMediaItemCollection(items: mediaItems)
         player.setQueueWithItemCollection(mediaCollection)
-        
         if playFlag == true{
             playFlag = false
             player.nowPlayingItem = mediaItems[playItem]
